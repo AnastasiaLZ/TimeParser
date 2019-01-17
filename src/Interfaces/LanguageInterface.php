@@ -109,7 +109,7 @@ interface LanguageInterface
     /**
      * Try to translate words to number.
      *
-     * @param string $alpha
+     * @param string $string
      *
      * @return int|bool
      */
@@ -120,7 +120,7 @@ interface LanguageInterface
      *
      * @param string             $rule
      * @param array              $matches
-     * @param \DateTimeImmutable $datetime]
+     * @param \DateTimeImmutable $datetime
      *
      * @return \DateTimeImmutable
      */
