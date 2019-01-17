@@ -42,6 +42,14 @@ class TimeParserTest extends PHPUnit_Framework_TestCase
             ['yesterday', '-1 day'],
             ['2 hours ago', '-2 hour'],
             ['10 years ago', '-10 year'],
+            ['in twenty two days, twenty five hours and fifty five minutes', '+22 days +25 hours +55 minutes'],
+            ['thirty first december 2018', '31 december 2018'],
+            ['next week', '+1 week'],
+            ['in next month', '+1 month'],
+            ['next year', '+1 year'],
+            ['last week', '-1 week'],
+            ['in last month', '-1 month'],
+            ['last year', '-1 year'],
             ['the string does not contain the date', false],
         ];
     }
@@ -76,6 +84,14 @@ class TimeParserTest extends PHPUnit_Framework_TestCase
             ['вчера', '-1 day'],
             ['2 часа назад', '-2 hour'],
             ['10 лет назад', '-10 year'],
+            ['через двадцать два дня, двадцать пять часов и пятьдесят пять минут', '+22 days +25 hours +55 minutes'],
+            ['тридцать первого декабря 2018', '31 december 2018'],
+            ['на следующей неделе', '+1 week'],
+            ['в следующем месяце', '+1 month'],
+            ['в следующем году', '+1 year'],
+            ['на прошлой неделе', '-1 week'],
+            ['в прошлом месяце', '-1 month'],
+            ['в прошлом году', '-1 year'],
             ['строка не содержит дату', false],
         ];
     }

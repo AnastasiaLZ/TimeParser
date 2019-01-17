@@ -2,11 +2,13 @@
     "language": "German",
     "rules": {
         "absolute": {
-            "time": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~u",
-            "weekday": "~(am ?)?(?<pronoun>diesen|nächsten) (?<weekday>montag|dienstag|mittwoch|donnerstag|freitag|sonnabend|samstag|sonntag)~u",
-            "year": "~((?<pronoun>dieses|nächstes)|((?<digit>[[:digit:]]+))) Jahr~iu",
-            "month": "~(i[nm] ?)((?<pronoun>diesen|nächsten) Monat|(?<month>januar|februar|märz|mai|juni|juli|oktober|dezember))~iu",
-            "week": "~(?<pronoun>diese|nächste) Woche~u"
+            "$hour:$min:$sec": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~u",
+            "$pronoun week $weekday": "~(am ?)?(?<pronoun>diesen|nächsten) (?<weekday>montag|dienstag|mittwoch|donnerstag|freitag|sonnabend|samstag|sonntag)~u",
+            "$pronoun year": "~(?<pronoun>dieses|nächstes) Jahr~iu",
+            "$digit-$month-$day": "~(?<digit>[[:digit:]]+) Jahr~iu",
+            "$pronoun month": "~(i[nm] ?)(?<pronoun>diesen|nächsten) Monat~iu",
+            "$year-$month-$day": "~(i[nm] ?)(?<month>januar|februar|märz|mai|juni|juli|oktober|dezember)~iu",
+            "$pronoun week": "~(?<pronoun>diese|nächste) Woche~u"
         },
         "relative": {
             "hour": "~(nach ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) Uhr)~iu",

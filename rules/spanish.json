@@ -2,11 +2,13 @@
     "language": "Spanish",
     "rules": {
         "absolute": {
-            "time": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~u",
-            "weekday": "~(en|el) (?<pronoun>este|próximo) (?<weekday>lunes|martes|miércoles|jueves|viernes|sábado|domingo)~iu",
-            "year": "~(en|el) ((?<pronoun>este|próximo)|((?<digit>[[:digit:]]+))) año~iu",
-            "month": "~(en|el) ((?<pronoun>este|próximo) месяце|(?<month>enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))~iu",
-            "week": "~(en|el) (?<pronoun>este|próximo) semana~iu"
+            "$hour:$min:$sec": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~u",
+            "$pronoun week $weekday": "~(en|el) (?<pronoun>este|próximo) (?<weekday>lunes|martes|miércoles|jueves|viernes|sábado|domingo)~iu",
+            "$pronoun year": "~(en|el) (?<pronoun>este|próximo) año~iu",
+            "$digit-$month-$day": "~(en|el) (?<digit>[[:digit:]]+) año~iu",
+            "$pronoun month": "~(en|el) (?<pronoun>este|próximo) mes~iu",
+            "$year-$month-$day": "~(en|el) (?<month>enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)~iu",
+            "$pronoun week": "~(en|el) (?<pronoun>este|próximo) semana~iu"
         },
         "relative": {
             "hour": "~(en ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) horas?)~u",

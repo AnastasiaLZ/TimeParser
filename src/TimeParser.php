@@ -1,315 +1,242 @@
 <?php
+
+/**
+ * TimeParser (https://wapmorgan.github.io/TimeParser/)
+ *
+ * @link      https://github.com/wapmorgan/TimeParser
+ * @copyright Copyright (c) 2014-2019 wapmorgan
+ * @license   https://github.com/wapmorgan/TimeParser/blob/master/LICENSE (MIT License)
+ */
+
 namespace wapmorgan\TimeParser;
 
 use DateTimeImmutable;
 use Exception;
 
-class TimeParser {
-	protected $languagesRules = array();
-	protected $allowAlphabeticUnits = false;
+class TimeParser
+{
+    protected $languages;
+    protected $debug = false;
 
-	static protected $months = array(
-		'january' => 1,
-		'february' => 2,
-		'march' => 3,
-		'april' => 4,
-		'may' => 5,
-		'june' => 6,
-		'july' => 7,
-		'august' => 8,
-		'september' => 9,
-		'october' => 10,
-		'november' => 11,
-		'december' => 12,
-	);
+    /**
+     * @param mixed $languages
+     */
+    public function __construct($languages = null)
+    {
+        if (is_string($languages)) {
+            $languages = [$languages];
+        }
 
-	static private $debug = false;
-	static private $wordsToNumber = null;
+        if (is_array($languages)) {
+            $rules     = $this->getAvailableRules();
+            $classes   = $this->getAvailableLanguages();
+            $available = array_merge($rules, $classes);
+            $languages = array_map('mb_strtolower', array_filter($languages, 'is_string'));
 
-	static public function enableDebug() {
-		self::$debug = true;
-	}
+            if ($languages !== ['all']) {
+                $available = array_intersect($languages, $available);
+                $unknown   = array_diff($languages, $available);
 
-	static public function disableDebug() {
-		self::$debug = false;
-	}
+                if (empty($available) || $unknown) {
+                    throw new Exception(sprintf(
+                        'Unknown language used: %s',
+                        implode(', ', $unknown)
+                    ));
+                }
+            }
 
-	static public function debugging() {
-		return self::$debug;
-	}
+            foreach ($available as $name) {
+                if (in_array($name, $classes)) {
+                    $class = 'wapmorgan\\TimeParser\\Language\\'.ucfirst($name);
+                    $class = new $class();
 
-	static public function setWordsToNumberCallback(callable $callback) {
-		self::$wordsToNumber = $callback;
-	}
+                    $this->addLanguage($class);
+                } else {
+                    $this->addLanguage(Language::createFromName($name));
+                }
+            }
+        }
+    }
 
-	public function __construct($languages = null) {
-		$this->populateLanguageRules($languages);
-	}
+    /**
+     * Enables or disables debugging messages.
+     *
+     * @param bool $debug
+     */
+    public function setDebug($debug = false)
+    {
+        $this->debug = (bool) $debug;
 
-	public function allowAlphabeticUnits() {
-		$this->allowAlphabeticUnits = true;
-	}
+        return $this;
+    }
 
-	public function disallowAlphabeticUnits() {
-		$this->allowAlphabeticUnits = false;
-	}
+    /**
+     * Parses the string to receive a DateTime object from it.
+     *
+     * @param string $string              The input string
+     * @param bool   $falseWhenNotChanged Return false if parsing had no effect
+     * @param string &$result
+     *
+     * @return bool|DateTimeImmutable
+     */
+    public function parse($string, $falseWhenNotChanged = false, &$result = null)
+    {
+        if (empty($this->languages) || !is_array($this->languages)) {
+            throw new Exception('You must add at least one language.');
+        }
 
-	protected function populateLanguageRules($languages = null) {
-		// collect rules
-		$availableLanguages = array_map(function ($lang) {
-			return strtolower(basename($lang, '.json'));
-		}, glob(dirname(__FILE__).'/../rules/*.json'));
+        $datetime = $current = new DateTimeImmutable();
+        $matches  = null;
 
-		if ($languages !== null && $languages !== 'all') {
-			if (!is_array($languages)) {
-				$languages = [$languages];
-			}
+        foreach ($this->languages as $language) {
+            foreach ($language->getRules() as $type => $rules) {
+                $method = 'parse'.ucfirst($type);
 
-			$availableLanguages = array_intersect($languages, $availableLanguages);
+                if (!method_exists($language, $method)) {
+                    continue;
+                }
 
-			if (empty($availableLanguages)) {
-				throw new Exception(sprintf('Unknown language used: %s', 
-					implode(', ', array_diff($languages, $availableLanguages))
-				));
-			}
-		}
+                foreach ($rules as $rule => $patterns) {
+                    if (!is_array($patterns)) {
+                        $patterns = [$patterns];
+                    }
 
-		foreach ($availableLanguages as $language) {
-			$data = json_decode(file_get_contents(dirname(dirname(__FILE__)).DIRECTORY_SEPARATOR.'rules'.DIRECTORY_SEPARATOR.$language.'.json'), true);
+                    foreach ($patterns as $pattern) {
+                        while ($this->match($pattern, $string, $matches)) {
+                            $datetime = call_user_func([$language, $method], $rule, $matches, $datetime);
+                        }
+                    }
+                }
+            }
+        }
 
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				throw new Exception(json_last_error_msg());
-			}
-			
-			$this->addLanguage($data);
-		}
-	}
+        $result = $this->stripWhitespace($string);
 
-	public function addLanguage(array $data)
-	{
-		if (!isset($data['language']) 
-			|| !is_string($data['language'])
-			|| !preg_match('/^[a-z]+((\s|\/)[a-z]+)?$/ui', $data['language'])
-		) {
-			throw new Exception('Wrong language name given');
-		}
+        if ($datetime === $current && $falseWhenNotChanged) {
+            return false;
+        }
 
-		if (!isset($data['rules']['absolute']) || !is_array($data['rules']['absolute'])) {
-			throw new Exception('"rules.absolute" must be an array');
-		}
+        return $datetime;
+    }
 
-		if (!isset($data['rules']['relative']) || !is_array($data['rules']['relative'])) {
-			throw new Exception('"rules.relative" must be an array');
-		}
+    /**
+     * Adds a language.
+     *
+     * @param Interfaces\LanguageInterface $language
+     */
+    public function addLanguage(Interfaces\LanguageInterface $language)
+    {
+        $name = mb_strtolower($language->getName());
 
-		if (!isset($data['week_days']) || !is_array($data['week_days'])) {
-			throw new Exception('"week_days" must be an array');
-		}
+        $language->setTimeParser($this);
 
-		if (!isset($data['pronouns']) || !is_array($data['pronouns'])) {
-			throw new Exception('"pronouns" must be an array');
-		}
+        $this->languages[$name] = $language;
 
-		if (!isset($data['months']) || !is_array($data['months'])) {
-			throw new Exception('"months" must be an array');
-		}
+        return $this;
+    }
 
-		if (!isset($data['units']) || !is_array($data['units'])) {
-			throw new Exception('"months" must be an array');
-		}
+    /**
+     * Get the available languages rules from rules folder.
+     *
+     * @return array The available rules
+     */
+    public function getAvailableRules()
+    {
+        return array_map(function ($lang) {
+            return strtolower(basename($lang, '.json'));
+        }, glob(__DIR__.'/../rules/*.json'));
+    }
 
-		$name = mb_strtolower($data['language']);
-		$lang = new Language($data['language'], $data['rules'], $data['week_days'], $data['pronouns'], $data['months'], $data['units']);
+    /**
+     * Get the available languages classes from Language folder.
+     *
+     * @return array The available languages classes
+     */
+    public function getAvailableLanguages()
+    {
+        return array_map(function ($lang) {
+            return strtolower(basename($lang, '.php'));
+        }, glob(dirname(__FILE__).'/Language/*.php'));
+    }
 
-		$this->languagesRules[$name] = $lang;
-	}
+    /**
+     * Prints the debug message.
+     *
+     * @param string $message
+     */
+    public function debug($message)
+    {
+        static $isCli;
 
-	public function parse($string, $falseWhenNotChanged = false, &$result = null) {
-		$string = self::prepareString($string);
-		$datetime = $currentDatetime = new DateTimeImmutable();
+        if (!$this->debug) {
+            return;
+        }
 
-		// apply rules
-		foreach ($this->languagesRules as $name => $language) {
-			foreach ($language->rules as $ruleType => $rules) {
-				foreach ($rules as $ruleName => $ruleRegex) {
-					if (self::match($ruleRegex, $string, $matches)) {
-						DebugStream::show('Matched: '.$ruleRegex.PHP_EOL);
-						if ($ruleType == 'absolute') {
-							switch ($ruleName) {
-								case 'date':
-									$month = $language->translateMonth($matches['month'][0]);
-									if (!empty($matches['year'][0]))
-										$year = $matches['year'][0];
-									else
-										$year = $datetime->format('Y');
-									if (!empty($matches['digit'][0])) {
-										$day = $matches['digit'][0];
-										DebugStream::show('Set date: '.$year.'-'.$month.'-'.$day.PHP_EOL);
-										$datetime = $datetime->setDate((int)$year, self::$months[$month], (int)$day);
-									} else if ($this->allowAlphabeticUnits) {
-										$alpha = $language->translateUnit($matches['alpha'][0]);
-										if (is_numeric($alpha)) {
-											DebugStream::show('Set date: '.$year.'-'.$month.'-'.$alpha.PHP_EOL);
-											$datetime = $datetime->setDate((int)$year, self::$months[$month], (int)$alpha);
-										}
-										// parse here alphabetic value
-									}
-									break;
-								case 'time':
-									if (!empty($matches['sec'])) {
-										$datetime = $datetime->setTime((int)$matches['hour'][0], (int)$matches['min'][0], (int)$matches['sec'][0]);
-										DebugStream::show('Set time: '.$matches['hour'][0].':'.$matches['min'][0].':'.$matches['sec'][0].PHP_EOL);
-									} else {
-										$datetime = $datetime->setTime((int)$matches['hour'][0], (int)$matches['min'][0]);
-										DebugStream::show('Set time: '.$matches['hour'][0].':'.$matches['min'][0].PHP_EOL);
-									}
-									break;
-								case 'weekday':
-									if (!empty($matches['pronoun']) && ($pronoun = $language->translatePronoun($matches['pronoun'][0])) == 'next') {
-										$weekday = $language->translateWeekDay($matches['weekday'][0]);
-										$time = strtotime('next week '.$weekday);
-										DebugStream::show('Set weekday: next '.$weekday.PHP_EOL);
-									} else {
-										$weekday = $language->translateWeekDay($matches['weekday'][0]);
-										$time = strtotime('this week '.$weekday);
-										DebugStream::show('Set weekday: this '.$weekday.PHP_EOL);
-									}
-									$date = explode('.', date('d.m.Y', $time));
-									$datetime = $datetime->setDate((int)$date[2], (int)$date[1], (int)$date[0]);
-									break;
-								case 'year':
-									if (!empty($matches['pronoun'][0])) {
-										$pronoun = $language->translatePronoun($matches['pronoun'][0]);
-										if ($pronoun == 'next') {
-											$datetime = $datetime->modify('+1 year');
-											DebugStream::show('Set year: +1'.PHP_EOL);
-										}
-									} else {
-										$year = $matches['digit'][0];
-										$datetime = $datetime->setDate((int)$year, (int)$datetime->format('m'), (int)$datetime->format('d'));
-										DebugStream::show('Set year: '.$year.PHP_EOL);
-									}
-									break;
-								case 'month':
-									$pronoun = $language->translatePronoun($matches['pronoun'][0]);
-									if ($pronoun == 'next') {
-										$datetime = $datetime->modify('+1 month');
-										DebugStream::show('Set month: +1'.PHP_EOL);
-									} else {
-										$month = $language->translateMonth($matches['month'][0]);
-										DebugStream::show('Set month: '.$month.PHP_EOL);
-										$datetime = $datetime->modify($month);
-									}
-									break;
-								case 'week':
-									$pronoun = $language->translatePronoun($matches['pronoun'][0]);
-									if ($pronoun == 'next') {
-										$datetime = $datetime->modify('+1 week');
-										DebugStream::show('Set week: +1'.PHP_EOL);
-									}
-									break;
-							}
-						} else if ($ruleType == 'relative') {
-							$digit = isset($matches['digit'][0]) ? $matches['digit'][0] : '';
-							$alpha = isset($matches['alpha'][0]) ? $matches['alpha'][0] : '';
+        if (null === $isCli) {
+            $isCli = defined('STDIN');
+        }
 
-							if ($digit === '' && $alpha === '') {
-								$digit = 1;
-							}
+        $message = htmlspecialchars($message).PHP_EOL;
 
-							if ($alpha !== '' && $this->allowAlphabeticUnits) {
-								$digit = $language->translateUnit($alpha);
+        if ($isCli) {
+            $message = nl2br($message);
+        }
 
-								if (!is_numeric($digit)) {
-									if (is_callable(self::$wordsToNumber)) {
-										$digit = call_user_func(self::$wordsToNumber, $alpha, $name);
-									} else {
-										$alpha = strtr($alpha, $language->units);
-										$parts = array_filter(array_map(
-											function ($val) {
-												return floatval($val);
-											},
-											preg_split('/[\s-]+/', $alpha)
-										));
+        echo $message;
+    }
 
-										$digit = array_sum($parts);
-									}
-								}
-							}
+    /**
+     * Strips whitespace from the beginning and end of a string and replaces repeated spaces with one.
+     *
+     * @param string $string The input string
+     *
+     * @return string The stripped string
+     */
+    public function stripWhitespace($string)
+    {
+        return preg_replace(['/^[\pZ\pC]+|[\pZ\pC]+$/u', '/[\pZ\pC]{1,}/u'], ['', ' '], $string);
+    }
 
-							if ($digit && is_numeric($digit)) {
-								if (preg_match('/^[a-z]+$/', $ruleName)) {
-									$modify = "+{$digit} {$ruleName}";
-								} else {
-									$modify = str_replace('$1', $digit, $ruleName);
-								}
+    /**
+     * Searches string for a match to the regular expression given in pattern.
+     *
+     * @param string $pattern  The pattern to search for, as a string
+     * @param string &$string  The input string
+     * @param array  &$matches The matches fills with the results of search
+     *
+     * @return bool
+     */
+    public function match($pattern, &$string, &$matches)
+    {
+        if (preg_match($pattern, $string, $matches, PREG_OFFSET_CAPTURE)) {
+            $string = substr($string, 0, $matches[0][1]).substr($string, $matches[0][1] + strlen($matches[0][0]));
+            $string = $this->stripWhitespace($string);
 
-								if (preg_match('/^[\+\-]\d+ [a-z]+$/', $modify)) {
-									DebugStream::show('Add offset: '.$modify.PHP_EOL);
-									$datetime = $datetime->modify($modify);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+            $this->debug('Matched: '.$pattern);
 
-		$result = trim(preg_replace(['/^[\pZ\pC]+|[\pZ\pC]+$/u', '/[\pZ\pC]{2,}/u'], ['', ' '], $string));
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-		if ($datetime === $currentDatetime && $falseWhenNotChanged)
-			return false;
-		return $datetime;
-	}
+    /**
+     * @param string $string
+     *
+     * @return string
+     */
+    protected function prepareString($string)
+    {
+        if (function_exists('mb_strtolower')) {
+            if (($encoding = mb_detect_encoding($string)) != 'UTF-8') {
+                $string = mb_convert_encoding($string, 'UTF-8', $encoding);
+            }
 
-	static public function parseString($string, $languages = 'all', $allowAlphabeticUnits = false, $falseWhenNotChanged = false, &$result = null) {
-		static $parsers = array();
+            $string = mb_strtolower($string);
+        } else {
+            $string = strtolower($string);
+        }
 
-		$key = is_array($languages) ? implode(',', $languages) : $languages;
-
-		if (!isset($parsers[$key])) {
-			$parsers[$key] = new self($languages);
-			if ($allowAlphabeticUnits) $parsers[$key]->allowAlphabeticUnits();
-		}
-		return $parsers[$key]->parse($string, $falseWhenNotChanged, $result);
-	}
-
-	/**
-	 * @param string $regex Regular expression to match
-	 * @param string $string String to match. Will be changed if matched.
-	 * @param array $matches Matched data.
-	 * @return boolean true if match found
-	 */
-	static private function match($regex, &$string, &$matches) {
-		if (preg_match($regex, $string, $matches, PREG_OFFSET_CAPTURE)) {
-			$string = substr($string, 0, $matches[0][1]).substr($string, $matches[0][1] + strlen($matches[0][0]));
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	static private function parseWithStrtotime($string) {
-		$datetime = new DateTime;
-		$time = strtotime($string);
-		if ($time === false) {
-			DebugStream::show('strtotime() failed'.PHP_EOL);
-			return $datetime;
-		} else {
-			DebugStream::show('strtotime() returned: '.$time.PHP_EOL);
-			$datetime->setTimestamp($time);
-			return $datetime;
-		}
-	}
-
-	static private function prepareString($string) {
-		if (function_exists('mb_strtolower')) {
-			if (($encoding = mb_detect_encoding($string)) != 'UTF-8')
-				$string = mb_convert_encoding($string, 'UTF-8', $encoding);
-			$string = mb_strtolower($string);
-		} else
-			$string = strtolower($string);
-		$string = preg_replace('~[[:space:]]{1,}~', ' ', $string);
-		return $string;
-	}
+        return $this->stripWhitespace($string);
+    }
 }

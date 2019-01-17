@@ -2,11 +2,13 @@
     "language": "French",
     "rules": {
         "absolute": {
-            "time": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~",
-            "weekday": "~(en)? (?<pronoun>cette|ce|prochaine) (?<weekday>lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)~",
-            "year": "~((?<pronoun>cette|ce|prochaine)|((?<digit>[[:digit:]]+))) année~u",
-            "month": "~((?<pronoun>cette|ce|prochaine) mois|(?<month>janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))~u",
-            "week": "~(?<pronoun>cette|ce|prochaine) semaine~u"
+            "$hour:$min:$sec": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~",
+            "$pronoun week $weekday": "~(en)? (?<pronoun>cette|ce|prochaine) (?<weekday>lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)~",
+            "$pronoun year": "~(?<pronoun>cette|ce|prochaine) année~u",
+            "$digit-$month-$day": "~(?<digit>[[:digit:]]+) année~u",
+            "$pronoun month": "~(?<pronoun>cette|ce|prochaine) mois~u",
+            "$year-$month-$day": "~(?<month>janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)~u",
+            "$pronoun week": "~(?<pronoun>cette|ce|prochaine) semaine~u"
         },
         "relative": {
             "hour": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) heures?)~u",
