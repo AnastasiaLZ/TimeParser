@@ -1,13 +1,23 @@
 <?php
 
+/**
+ * TimeParser (https://wapmorgan.github.io/TimeParser/)
+ *
+ * @link      https://github.com/wapmorgan/TimeParser
+ * @copyright Copyright (c) 2014-2019 wapmorgan
+ * @license   https://github.com/wapmorgan/TimeParser/blob/master/LICENSE (MIT License)
+ */
+
+use PHPUnit\Framework\TestCase;
 use wapmorgan\TimeParser\TimeParser;
 
-class TimeParserTest extends PHPUnit_Framework_TestCase
+class TimeParserTest extends TestCase
 {
     protected static $parsers = [];
 
     public static function setUpBeforeClass()
     {
+        self::$parsers['all']     = new TimeParser('all');
         self::$parsers['russian'] = new TimeParser('russian');
         self::$parsers['english'] = new TimeParser('english');
     }
@@ -93,6 +103,40 @@ class TimeParserTest extends PHPUnit_Framework_TestCase
             ['в прошлом месяце', '-1 month'],
             ['в прошлом году', '-1 year'],
             ['строка не содержит дату', false],
+        ];
+    }
+
+    /**
+     * @dataProvider dataProviderStripWhitespace()
+     */
+    public function testStripWhitespace($string, $expected)
+    {
+        $string = self::$parsers['all']->stripWhitespace($string);
+
+        $this->assertEquals($expected, $string);
+    }
+
+    public function dataProviderStripWhitespace()
+    {
+        return [
+            [' TimeParser ', 'TimeParser'],
+            ["\x20 Time \x20 Parser \x20", 'Time Parser'],                          // U+0020 SPACE
+            ["\xc2\xa0 Time \xc2\xa0 Parser \xc2\xa0", 'Time Parser'],              // U+00A0 NO-BREAK SPACE
+            ["\xe1\x9a\x80 Time \xe1\x9a\x80 Parser \xe1\x9a\x80", 'Time Parser'],  // U+1680 OGHAM SPACE MARK
+            ["\xe2\x80\x80 Time \xe2\x80\x80 Parser \xe2\x80\x80", 'Time Parser'],  // U+2000 EN QUAD
+            ["\xe2\x80\x81 Time \xe2\x80\x81 Parser \xe2\x80\x81", 'Time Parser'],  // U+2001 EM QUAD
+            ["\xe2\x80\x82 Time \xe2\x80\x82 Parser \xe2\x80\x82", 'Time Parser'],  // U+2002 EN SPACE
+            ["\xe2\x80\x83 Time \xe2\x80\x83 Parser \xe2\x80\x83", 'Time Parser'],  // U+2003 EM SPACE
+            ["\xe2\x80\x84 Time \xe2\x80\x84 Parser \xe2\x80\x84", 'Time Parser'],  // U+2004 THREE-PER-EM SPACE
+            ["\xe2\x80\x85 Time \xe2\x80\x85 Parser \xe2\x80\x85", 'Time Parser'],  // U+2005 FOUR-PER-EM SPACE
+            ["\xe2\x80\x86 Time \xe2\x80\x86 Parser \xe2\x80\x86", 'Time Parser'],  // U+2006 SIX-PER-EM SPACE
+            ["\xe2\x80\x87 Time \xe2\x80\x87 Parser \xe2\x80\x87", 'Time Parser'],  // U+2007 FIGURE SPACE
+            ["\xe2\x80\x88 Time \xe2\x80\x88 Parser \xe2\x80\x88", 'Time Parser'],  // U+2008 PUNCTUATION SPACE
+            ["\xe2\x80\x89 Time \xe2\x80\x89 Parser \xe2\x80\x89", 'Time Parser'],  // U+2009 THIN SPACE
+            ["\xe2\x80\x8a Time \xe2\x80\x8a Parser \xe2\x80\x8a", 'Time Parser'],  // U+200A HAIR SPACE
+            ["\xe2\x80\xaf Time \xe2\x80\xaf Parser \xe2\x80\xaf", 'Time Parser'],  // U+202F NARROW NO-BREAK SPACE
+            ["\xe2\x81\x9f Time \xe2\x81\x9f Parser \xe2\x81\x9f", 'Time Parser'],  // U+205F MEDIUM MATHEMATICAL SPACE
+            ["\xe3\x80\x80 Time \xe3\x80\x80 Parser \xe3\x80\x80", 'Time Parser'],  // U+3000 IDEOGRAPHIC SPACE
         ];
     }
 
