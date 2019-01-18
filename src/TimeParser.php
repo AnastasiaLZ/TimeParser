@@ -15,7 +15,18 @@ use Exception;
 
 class TimeParser
 {
+    /**
+     * Current version number of TimeParser.
+     */
+    const VERSION = '3.0.0-DEV';
+
+    /**
+     * @var array
+     */
     protected $languages;
+    /**
+     * @var bool
+     */
     protected $debug = false;
 
     /**
