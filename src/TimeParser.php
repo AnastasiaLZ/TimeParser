@@ -39,8 +39,8 @@ class TimeParser
         }
 
         if (is_array($languages)) {
-            $rules     = $this->getAvailableRules();
-            $classes   = $this->getAvailableLanguages();
+            $rules     = static::getAvailableRules();
+            $classes   = static::getAvailableLanguages();
             $available = array_merge($rules, $classes);
             $languages = array_map('mb_strtolower', array_filter($languages, 'is_string'));
 
@@ -151,7 +151,7 @@ class TimeParser
      *
      * @return array The available rules
      */
-    public function getAvailableRules()
+    public static function getAvailableRules()
     {
         return array_map(function ($lang) {
             return strtolower(basename($lang, '.json'));
@@ -163,7 +163,7 @@ class TimeParser
      *
      * @return array The available languages classes
      */
-    public function getAvailableLanguages()
+    public static function getAvailableLanguages()
     {
         return array_map(function ($lang) {
             return strtolower(basename($lang, '.php'));
@@ -189,7 +189,7 @@ class TimeParser
 
         $message = htmlspecialchars($message).PHP_EOL;
 
-        if ($isCli) {
+        if (!$isCli) {
             $message = nl2br($message);
         }
 
