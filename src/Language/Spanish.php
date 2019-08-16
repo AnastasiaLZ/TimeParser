@@ -12,11 +12,11 @@ namespace wapmorgan\TimeParser\Language;
 
 use wapmorgan\TimeParser\Language;
 
-class English extends Language
+class Spanish extends Language
 {
     public function __construct()
     {
-        $data = static::findRuleByName('English');
+        $data = static::findRuleByName('Spanish');
         $data = static::validateData($data);
 
         parent::__construct(

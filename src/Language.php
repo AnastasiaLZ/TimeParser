@@ -74,6 +74,8 @@ class Language implements Interfaces\LanguageInterface
      */
     protected $weekDays;
 
+    protected $timeshift;
+
     /**
      * Advanced rules.
      *
@@ -89,16 +91,25 @@ class Language implements Interfaces\LanguageInterface
     protected $timeParser;
 
     /**
-     * @param string $name     Language name
-     * @param array  $absolute Absolute rules
-     * @param array  $relative Relative rules
-     * @param array  $months   List of months
-     * @param array  $pronouns List of pronouns
-     * @param array  $units    List of units
-     * @param array  $weekDays List of days of week
+     * @param string $name      Language name
+     * @param array  $absolute  Absolute rules
+     * @param array  $relative  Relative rules
+     * @param array  $months    List of months
+     * @param array  $pronouns  List of pronouns
+     * @param array  $units     List of units
+     * @param array  $weekDays  List of days of week
+     * @param array  $timeshift List of days of week
      */
-    public function __construct($name, array $absolute, array $relative, array $months, array $pronouns, array $units, array $weekDays)
-    {
+    public function __construct(
+        $name,
+        array $absolute,
+        array $relative,
+        array $months,
+        array $pronouns,
+        array $units,
+        array $weekDays,
+        array $timeshift
+    ) {
         foreach ($relative as $rule => $regex) {
             if (strpos($rule, '@') === 0 && strpos($rule, '_') !== false) {
                 $this->advanced[substr($rule, 1)] = $regex;
@@ -114,6 +125,7 @@ class Language implements Interfaces\LanguageInterface
         $this->pronouns      = $pronouns;
         $this->units         = $units;
         $this->weekDays      = $weekDays;
+        $this->timeshift     = $timeshift;
     }
 
     /**
@@ -122,6 +134,7 @@ class Language implements Interfaces\LanguageInterface
      * @param array $data
      *
      * @return Language
+     * @throws Exception
      */
     public static function createFromArray(array $data)
     {
@@ -134,7 +147,8 @@ class Language implements Interfaces\LanguageInterface
             $data['months'],
             $data['pronouns'],
             $data['units'],
-            $data['week_days']
+            $data['week_days'],
+            $data['timeshift']
         );
     }
 
@@ -144,6 +158,7 @@ class Language implements Interfaces\LanguageInterface
      * @param string $name
      *
      * @return Language
+     * @throws Exception
      */
     public static function createFromName($name = null)
     {
@@ -183,16 +198,17 @@ class Language implements Interfaces\LanguageInterface
      */
     public function parseAbsolute($rule, array $matches, $datetime)
     {
-        $year    = isset($matches['year'][0]) ? $matches['year'][0] : $datetime->format('Y');
-        $month   = isset($matches['month'][0]) ? $matches['month'][0] : $datetime->format('m');
-        $day     = isset($matches['day'][0]) ? (int) $matches['day'][0] : $datetime->format('d');
-        $hour    = isset($matches['hour'][0]) ? (int) $matches['hour'][0] : $datetime->format('H');
-        $min     = isset($matches['min'][0]) ? (int) $matches['min'][0] : $datetime->format('i');
-        $sec     = isset($matches['sec'][0]) ? (int) $matches['sec'][0] : $datetime->format('s');
-        $digit   = isset($matches['digit'][0]) ? $matches['digit'][0] : '';
-        $alpha   = isset($matches['alpha'][0]) ? $matches['alpha'][0] : '';
-        $pronoun = isset($matches['pronoun'][0]) ? $matches['pronoun'][0] : '';
-        $weekday = isset($matches['weekday'][0]) ? $matches['weekday'][0] : '';
+        $year      = isset($matches['year'][0]) ? $matches['year'][0] : $datetime->format('Y');
+        $month     = isset($matches['month'][0]) ? $matches['month'][0] : $datetime->format('m');
+        $day       = isset($matches['day'][0]) ? (int)$matches['day'][0] : $datetime->format('d');
+        $hour      = isset($matches['hour'][0]) ? (int)$matches['hour'][0] : '';
+        $min       = isset($matches['min'][0]) ? (int)$matches['min'][0] : '';
+        $sec       = isset($matches['sec'][0]) ? (int)$matches['sec'][0] : '';
+        $digit     = isset($matches['digit'][0]) ? $matches['digit'][0] : '';
+        $alpha     = isset($matches['alpha'][0]) ? $matches['alpha'][0] : '';
+        $pronoun   = isset($matches['pronoun'][0]) ? $matches['pronoun'][0] : '';
+        $weekday   = isset($matches['weekday'][0]) ? $matches['weekday'][0] : '';
+        $timeshift = isset($matches['timeshift'][0]) ? $matches['timeshift'][0] : '';
 
         $month = $this->translateMonth($month);
 
@@ -207,16 +223,17 @@ class Language implements Interfaces\LanguageInterface
         }
 
         $replace = [
-            '$year'    => (int) $year,
-            '$month'   => sprintf('%02d', max(1, min(12, $month))),
-            '$day'     => sprintf('%02d', max(1, min(31, $day))),
-            '$hour'    => sprintf('%02d', max(0, min(23, $hour))),
-            '$min'     => sprintf('%02d', max(0, min(59, $min))),
-            '$sec'     => sprintf('%02d', max(0, min(59, $sec))),
-            '$digit'   => is_numeric($digit) ? sprintf('%02d', $digit) : '',
-            '$alpha'   => $alpha,
-            '$pronoun' => $this->translatePronoun($pronoun),
-            '$weekday' => $this->translateWeekDay($weekday),
+            '$year'     => (int)$year,
+            '$month'    => sprintf('%02d', max(1, min(12, $month))),
+            '$day'      => sprintf('%02d', max(1, min(31, $day))),
+            '$hour'     => sprintf('%02d', max(0, min(23, $hour))),
+            '$min'      => sprintf('%02d', max(0, min(59, $min))),
+            '$sec'      => sprintf('%02d', max(0, min(59, $sec))),
+            '$digit'    => is_numeric($digit) ? sprintf('%02d', $digit) : '',
+            '$alpha'    => $alpha,
+            '$pronoun'  => $this->translatePronoun($pronoun),
+            '$weekday'  => $this->translateWeekDay($weekday),
+            '$timeshift' => $this->translateTimeShift($timeshift),
         ];
 
         $date = strtr($rule, $replace);
@@ -295,7 +312,7 @@ class Language implements Interfaces\LanguageInterface
             }
 
             if (preg_match('/^[\+\-]\d+ [a-z]+$/', $modify)) {
-                $this->timeParser->debug('Add offset: '.$modify);
+                $this->timeParser->debug('Add offset: ' . $modify);
                 $datetime = $datetime->modify($modify);
             }
         }
@@ -312,7 +329,8 @@ class Language implements Interfaces\LanguageInterface
      */
     protected static function validateData($data)
     {
-        if (!isset($data['language']) || !is_string($data['language']) || !preg_match(static::NAME_REGEX, $data['language'])) {
+        if (!isset($data['language']) || !is_string($data['language']) || !preg_match(static::NAME_REGEX,
+                $data['language'])) {
             throw new Exception('Invalid language name');
         }
 
@@ -340,6 +358,10 @@ class Language implements Interfaces\LanguageInterface
             throw new Exception('"week_days" must be an array');
         }
 
+        if (!isset($data['timeshift']) || !is_array($data['timeshift'])) {
+            throw new Exception('"timeshift" must be an array');
+        }
+
         return [
             'name'      => $data['language'],
             'absolute'  => $data['rules']['absolute'],
@@ -348,6 +370,7 @@ class Language implements Interfaces\LanguageInterface
             'pronouns'  => $data['pronouns'],
             'units'     => $data['units'],
             'week_days' => $data['week_days'],
+            'timeshift' => $data['timeshift'],
         ];
     }
 
@@ -366,7 +389,7 @@ class Language implements Interfaces\LanguageInterface
         }
 
         $name = mb_strtolower($name);
-        $file = dirname(__DIR__).DIRECTORY_SEPARATOR.'rules'.DIRECTORY_SEPARATOR.$name.'.json';
+        $file = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'rules' . DIRECTORY_SEPARATOR . $name . '.json';
 
         if (!file_exists($file)) {
             // throw new Exception(sprintf('Couldn\'t find language file "%s"', $name));

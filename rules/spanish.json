@@ -2,22 +2,46 @@
     "language": "Spanish",
     "rules": {
         "absolute": {
+            "$year-$month-$digit": "~((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) (?<month>enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)( (?<year>[[:digit:]]{4})( años?)?)?~u",
             "$hour:$min:$sec": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~u",
+            "$hour:00 $timeshift": "~(?<hour>\\d{1,2}) y (?<timeshift>media)~u",
+            "$hour:$min": "~(?<hour>\\d{1,2})(\\:(?<min>\\d{2}))?~u",
             "$pronoun week $weekday": "~(en|el) (?<pronoun>este|próximo) (?<weekday>lunes|martes|miércoles|jueves|viernes|sábado|domingo)~iu",
+            "$weekday $pronoun week": "~(?<weekday>lunes|martes|miércoles|jueves|viernes|sábado|domingo)\\ ?(?<pronoun>pasad[oa]|que viene)?~",
             "$pronoun year": "~(en|el) (?<pronoun>este|próximo) año~iu",
             "$digit-$month-$day": "~(en|el) (?<digit>[[:digit:]]+) año~iu",
             "$pronoun month": "~(en|el) (?<pronoun>este|próximo) mes~iu",
             "$year-$month-$day": "~(en|el) (?<month>enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)~iu",
-            "$pronoun week": "~(en|el) (?<pronoun>este|próximo) semana~iu"
+            "$pronoun week": "~(en|el) (?<pronoun>este|próximo) semana~iu",
+            "-1 week ": "~(en|el|la) semana pasad[oa]~iu",
+            "9 am": "~por la mañana~u",
+            "6 pm": "~tarde~u",
+            "9 pm": "~noche~u",
+            "2 pm": "~almuerzo~u"
         },
         "relative": {
-            "hour": "~(en ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) horas?)~u",
-            "minute": "~(en ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) minutos?)~u",
-            "sec": "~(en ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) segundos?)~u",
-            "year": "~(en ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) años?)~u",
-            "week": "~(en ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) semanas?)~u",
-            "day": "~(en ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) días?)~u",
-            "month": "~(en ((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) mes(es)?)~u"
+            "@relative": "~(después de(?<relative>((((?<!después de)(\\sи|,))?\\s(\\d+|\\pL+(\\s\\pL+)?))\\s(horas?|minutos?|segundos?|años?|semanas?|días?|mes(es)?)){2,}))~u",
+            "@relative_split": "~(\\sи|,)\\s~u",
+            "@relative_join": "después de",
+            "+$1 hour": "~((después de|en una?|cada dos)( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? horas?)~u",
+            "+$1 minute": "~((después de|en una?|cada dos)( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? minutos?)~u",
+            "+$1 sec": "~((después de|en una?|cada dos)( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? segundos?)~u",
+            "+$1 year": "~((después de|en una?|cada dos)( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? años?)~u",
+            "+$1 week": "~((después de|en una?|cada dos)( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? semanas?)~u",
+            "+$1 day": "~((después de|en una?|cada dos)( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? días?)~u",
+            "+$1 month": "~((después de|en una?|cada dos)( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? mes(es)?)~u",
+            "-$1 hour": "~(hace( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) )?horas?)~u",
+            "-$1 minute": "~(hace( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) )?minutos?)~u",
+            "-$1 sec": "~(hace( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) )?segundos?)~u",
+            "-$1 year": "~(hace( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) )?años?)~u",
+            "-$1 week": "~(hace( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) )?semanas?)~u",
+            "-$1 day": "~(hace( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) )?días?)~u",
+            "-$1 month": "~(hace( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) )?mes(es)?)~u",
+            "+1 day": "~\\bmañana\\b~u",
+            "+2 day": "~\\bpasado mañana\\b~u",
+            "-2 day": "~\\banteayer\\b~u",
+            "-1 day": "~\\bayer\\b~u",
+            "+0 day": "~\\bhoy\\b~u"
         }
     },
     "week_days": {
@@ -31,7 +55,10 @@
     },
     "pronouns": {
         "este": "this",
-        "próximo": "next"
+        "próximo": "next",
+        "pasado": "last",
+        "pasada": "last",
+        "que viene": "next"
     },
     "months": {
         "enero": "january",
@@ -68,5 +95,8 @@
         "dieciocho": 18,
         "diecinueve": 19,
         "veinte": 20
+    },
+    "timeshift": {
+        "media": "-30 min"
     }
 }

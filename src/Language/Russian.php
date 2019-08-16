@@ -31,7 +31,8 @@ class Russian extends Language
             $data['months'],
             $data['pronouns'],
             $data['units'],
-            $data['week_days']
+            $data['week_days'],
+            $data['timeshift']
         );
     }
 }

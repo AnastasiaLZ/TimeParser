@@ -31,6 +31,8 @@ class TimeParser
 
     /**
      * @param mixed $languages
+     *
+     * @throws Exception
      */
     public function __construct($languages = null)
     {
@@ -73,6 +75,8 @@ class TimeParser
      * Enables or disables debugging messages.
      *
      * @param bool $debug
+     *
+     * @return TimeParser
      */
     public function setDebug($debug = false)
     {
@@ -84,11 +88,12 @@ class TimeParser
     /**
      * Parses the string to receive a DateTime object from it.
      *
-     * @param string $string              The input string
-     * @param bool   $falseWhenNotChanged Return false if parsing had no effect
+     * @param string  $string              The input string
+     * @param bool    $falseWhenNotChanged Return false if parsing had no effect
      * @param string &$result
      *
      * @return bool|DateTimeImmutable
+     * @throws Exception
      */
     public function parse($string, $falseWhenNotChanged = false, &$result = null)
     {
@@ -98,34 +103,35 @@ class TimeParser
 
         $datetime = $current = new DateTimeImmutable();
         $matches  = null;
+        $text = $this->prepareString($string);
 
-        foreach ($this->languages as $language) {
-            foreach ($language->getRules() as $type => $rules) {
-                $method = 'parse'.ucfirst($type);
+        $language = $this->detectLang($text);
 
-                if (!method_exists($language, $method)) {
-                    continue;
+        if (!$language) {
+            return $falseWhenNotChanged ? false : $datetime;
+        }
+
+        foreach ($language->getRules() as $type => $rules) {
+            $method = 'parse'.ucfirst($type);
+
+            if (!method_exists($language, $method)) {
+                continue;
+            }
+
+            foreach ($rules as $rule => $patterns) {
+                if (!is_array($patterns)) {
+                    $patterns = [$patterns];
                 }
 
-                foreach ($rules as $rule => $patterns) {
-                    if (!is_array($patterns)) {
-                        $patterns = [$patterns];
-                    }
-
-                    foreach ($patterns as $pattern) {
-                        while ($this->match($pattern, $string, $matches)) {
-                            $datetime = call_user_func([$language, $method], $rule, $matches, $datetime);
-                        }
+                foreach ($patterns as $pattern) {
+                    while ($this->match($pattern, $text, $matches)) {
+                        $datetime = call_user_func([$language, $method], $rule, $matches, $datetime);
                     }
                 }
             }
         }
 
-        $result = $this->stripWhitespace($string);
-
-        if ($datetime === $current && $falseWhenNotChanged) {
-            return false;
-        }
+        $result = $text;
 
         return $datetime;
     }
@@ -134,6 +140,8 @@ class TimeParser
      * Adds a language.
      *
      * @param Interfaces\LanguageInterface $language
+     *
+     * @return TimeParser
      */
     public function addLanguage(Interfaces\LanguageInterface $language)
     {
@@ -249,5 +257,44 @@ class TimeParser
         }
 
         return $this->stripWhitespace($string);
+    }
+
+    /**
+     * @param $text
+     *
+     * @return Language|null
+     */
+    private function detectLang($text)
+    {
+        $matchesCount = [];
+
+        /** @var  Language $language */
+        foreach ($this->languages as $key => $language) {
+            $matchesCount[$key] = 0;
+            foreach ($language->getRules() as $type => $rules) {
+                $method = 'parse'.ucfirst($type);
+
+                if (!method_exists($language, $method)) {
+                    continue;
+                }
+
+                foreach ($rules as $rule => $patterns) {
+                    if (!is_array($patterns)) {
+                        $patterns = [$patterns];
+                    }
+
+                    foreach ($patterns as $pattern) {
+                        while ($this->match($pattern, $text, $matches)) {
+                            $matchesCount[$key]++;
+                        }
+                    }
+                }
+            }
+        }
+
+        $maxMatches = max($matchesCount);
+        $langName = array_search($maxMatches, $matchesCount);
+
+        return $maxMatches ? $this->languages[$langName] : null;
     }
 }

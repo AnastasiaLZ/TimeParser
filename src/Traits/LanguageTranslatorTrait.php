@@ -76,4 +76,14 @@ trait LanguageTranslatorTrait
             ? $this->weekDays[$string]
             : (null === $default ? $string : $default);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function translateTimeShift($string, $default = null)
+    {
+        return isset($this->timeshift[$string])
+            ? $this->timeshift[$string]
+            : (null === $default ? $string : $default);
+    }
 }

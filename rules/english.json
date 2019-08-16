@@ -2,14 +2,26 @@
     "language": "English",
     "rules": {
         "absolute": {
-            "$pronoun month": "~in (?<pronoun>this|next|last) month~",
+            "$pronoun month": "~(?<pronoun>this|next|last) month~",
             "$year-$month-$day": "~in (?<month>january|february|march|april|may|june|july|august|september|october|november|december)~",
+            "$day.$month.$year": "~(?<month>january|february|march|april|may|june|july|august|september|october|november|december) the (?<day>\\d{1,2})th~",
             "$hour:$min:$sec": "~((at )?(?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~",
             "$pronoun week $weekday": "~(on )?(?<pronoun>next|this|last) (?<weekday>monday|tuesday|wednesday|thursday|friday|saturday|sunday)~",
             "$year-$month-$digit": "~((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) (?<month>january|february|march|april|may|june|july|august|september|october|november|december)( (?<year>[[:digit:]]{4})( year)?)?~",
             "$pronoun year": "~(?<pronoun>this|next|last) year(?!s)~",
             "$digit-$month-$day": "~(?<digit>[[:digit:]]+) year(?!s)~",
-            "$pronoun week": "~(?<pronoun>this|next|last) week~"
+            "$pronoun week": "~(?<pronoun>this|next|last) week~",
+            "$hour:$min am": [
+                "~(?<hour>0?[1-3]|12) ([\\:.](?<min>\\d{2}))?\\ ?(pm)~u",
+                "~(?<hour>0?[4-9]|1[01]) ([\\:.](?<min>\\d{2}))?\\ ?(am)~u"
+            ],
+            "$hour:$min pm": [
+                "~(?<hour>0?[1-4]|12)([\\:\\ .](?<min>\\d{2}))?\\ ?(am)~u",
+                "~(?<hour>0?[5-9]|1[01])([\\:\\ .](?<min>\\d{2}))?\\ ?(pm)~u"
+            ],
+            "$hour:00 $timeshift": "~(?<timeshift>half) (?<hour>\\d{1,2})~u",
+            "9 am": "~morning~u",
+            "6 pm": "~evening~u"
         },
         "relative": {
             "@relative": "~(in(?<relative>((((?<!in)(\\sand|,))?\\s(\\d+|\\pL+(\\s\\pL+)?))\\s(hours?|minutes?|seconds?|years?|weeks?|days?|months?)){2,}))~",
@@ -89,5 +101,8 @@
         "thirtieth": 30,
         "forty": 40,
         "fifty": 50
+    },
+    "timeshift": {
+        "half": "-30 min"
     }
 }
