@@ -1,2 +1,10 @@
-vendor/
-composer.lock
+/.php_cs.cache
+/vendor
+/.phpintel
+/composer.lock
+/index.php
+/phpcs.sh
+/timeparser.sublime-project
+/timeparser.sublime-workspace
+/README.html
+.idea/

@@ -1,7 +1,15 @@
 <?php
 
-use wapmorgan\TimeParser\TimeParser;
+/**
+ * TimeParser (https://wapmorgan.github.io/TimeParser/)
+ *
+ * @link      https://github.com/wapmorgan/TimeParser
+ * @copyright Copyright (c) 2014-2019 wapmorgan
+ * @license   https://github.com/wapmorgan/TimeParser/blob/master/LICENSE (MIT License)
+ */
+
 use PHPUnit\Framework\TestCase;
+use wapmorgan\TimeParser\TimeParser;
 
 class TimeParserTest extends TestCase
 {
@@ -9,8 +17,12 @@ class TimeParserTest extends TestCase
 
     public static function setUpBeforeClass()
     {
+        self::$parsers['all']     = new TimeParser('all');
         self::$parsers['russian'] = new TimeParser('russian');
         self::$parsers['english'] = new TimeParser('english');
+        self::$parsers['french'] = new TimeParser('french');
+        self::$parsers['german'] = new TimeParser('german');
+        self::$parsers['spanish'] = new TimeParser('spanish');
     }
 
     /**
@@ -18,7 +30,7 @@ class TimeParserTest extends TestCase
      */
     public function testEnglish($string, $expected, $midnight = false)
     {
-        $result = self::$parsers['english']->parse($string, true);
+        $result = self::$parsers['all']->parse($string, true);
 
         $this->prepareDate($result, $expected, $midnight);
         $this->assertEquals($expected, $result);
@@ -27,23 +39,44 @@ class TimeParserTest extends TestCase
     public function dataProviderEnglish()
     {
         return [
-            ['15 december 1977 year', '15 december 1977'],
-            ['at 15:12:13', '15:12:13'],
-            ['next monday', 'next monday', true],
-            ['next year', '+1 year'],
-            ['in february', 'february'],
-            ['in 15 hours', '+15 hour'],
-            ['in 10 minutes', '+10 minutes'],
-            ['in 11 seconds', '+11 seconds'],
-            ['in 5 years', '+5 years'],
-            ['in 2 weeks', '+2 weeks'],
-            ['in 1 day', '+1 day'],
-            ['in 10 months', '+10 month'],
-            ['tomorrow', '+1 day'],
-            ['yesterday', '-1 day'],
-            ['2 hours ago', '-2 hour'],
-            ['10 years ago', '-10 year'],
-            ['the string does not contain the date', false],
+            0 => ['15 december 1977 year', '15 december 1977'],
+            1 => ['at 15:12:13', '15:12:13'],
+            2 => ['next monday', 'next monday'],
+            3 => ['next year', '+1 year'],
+            4 => ['in february', 'february'],
+            5 => ['in 15 hours', '+15 hour'],
+            6 => ['in 10 minutes', '+10 minutes'],
+            7 => ['in 11 seconds', '+11 seconds'],
+            8 => ['in 5 years', '+5 years'],
+            9 => ['in 2 weeks', '+2 weeks'],
+            10 => ['in 1 day', '+1 day'],
+            11 => ['in 10 months', '+10 month'],
+            12 => ['tomorrow', '+1 day'],
+            13 => ['yesterday', '-1 day'],
+            14 => ['2 hours ago', '-2 hour'],
+            15 => ['10 years ago', '-10 year'],
+            16 => ['in twenty two days, twenty five hours and fifty five minutes', '+22 days +25 hours +55 minutes'],
+            17 => ['thirty first december 2018', '31 december 2018'],
+            18 => ['next week', '+1 week'],
+            19 => ['in next month', '+1 month'],
+            20 => ['next year', '+1 year'],
+            21 => ['last week', '-1 week'],
+            22 => ['in last month', '-1 month'],
+            23 => ['last year', '-1 year'],
+            24 => ['the string does not contain the date', false],
+            25 => ['Tomorrow morning, please.', 'tomorrow 9 am'],
+            26 => ['Could you please call back around 9 am.', 'today 9 am'],
+            27 => ['Shall I move it to next Thursday?', 'next week thursday', true],
+            28 => ['next sunday', 'next week sunday', true],
+            29 => ['august the 20th', '20 august'],
+            30 => ['Will it suit this Friday?', 'friday', true],
+            31 => ['Let\'s have a call in a weeks time.', '+1 week'],
+            32 => ['I suggest we meet next week.', '+1 week'],
+            33 => ['I ordered it yesterday', '-1 day'],
+            34 => ['Last week it was supposed to be delivered.', '-1 week'],
+            35 => ['I was in your office the day before yesterday.', '-2 days'],
+            36 => ['I\'ll be ready sometime next month.', '+1 month'],
+            37 => ['Should I call at half 9?', '9:00 -30 min'],
         ];
     }
 
@@ -52,7 +85,7 @@ class TimeParserTest extends TestCase
      */
     public function testRussian($string, $expected, $midnight = false)
     {
-        $result = self::$parsers['russian']->parse($string, true);
+        $result = self::$parsers['all']->parse($string, true);
 
         $this->prepareDate($result, $expected, $midnight);
         $this->assertEquals($expected, $result);
@@ -61,23 +94,86 @@ class TimeParserTest extends TestCase
     public function dataProviderRussian()
     {
         return [
-            ['15 декабря 1977 года', '15 december 1977'],
-            ['в 15:12:13', '15:12:13'],
-            ['в следующий понедельник', 'next monday', true],
-            ['в следующем году', '+1 year'],
-            ['в феврале', 'february'],
-            ['через 15 часов', '+15 hour'],
-            ['через 10 минут', '+10 minutes'],
-            ['через 11 секунд', '+11 seconds'],
-            ['через 5 лет', '+5 years'],
-            ['через 2 недели', '+2 weeks'],
-            ['через 1 день', '+1 day'],
-            ['через 10 месяцев', '+10 month'],
-            ['завтра', '+1 day'],
-            ['вчера', '-1 day'],
-            ['2 часа назад', '-2 hour'],
-            ['10 лет назад', '-10 year'],
-            ['строка не содержит дату', false],
+            0 => ['15 декабря 1977 года', '15 december 1977'],
+            1 => ['в 15:12:13', '15:12:13'],
+            2 => ['в следующий понедельник', 'next monday', true],
+            3 => ['в следующем году', '+1 year'],
+            4 => ['в феврале', 'february'],
+            5 => ['через 15 часов', '+15 hour'],
+            6 => ['через 10 минут', '+10 minutes'],
+            7 => ['через 11 секунд', '+11 seconds'],
+            8 => ['через 5 лет', '+5 years'],
+            9 => ['через 2 недели', '+2 weeks'],
+            10 => ['через 1 день', '+1 day'],
+            11 => ['через 10 месяцев', '+10 month'],
+            12 => ['завтра', '+1 day'],
+            13 => ['вчера', '-1 day'],
+            14 => ['2 часа назад', '-2 hour'],
+            15 => ['10 лет назад', '-10 year'],
+            16 => ['через двадцать два дня, двадцать пять часов и пятьдесят пять минут', '+22 days +25 hours +55 minutes'],
+            17 => ['тридцать первого декабря 2018', '31 december 2018'],
+            18 => ['на следующей неделе', '+1 week'],
+            19 => ['в следующем месяце', '+1 month'],
+            20 => ['в следующем году', '+1 year'],
+            21 => ['на прошлой неделе', '-1 week'],
+            22 => ['в прошлом месяце', '-1 month'],
+            23 => ['в прошлом году', '-1 year'],
+            24 => ['в 10 утра', '10 am'],
+            25 => ['в 10 часов вечера', '10 pm'],
+            26 => ['в 2 ночи', '2 am'],
+            27 => ['в 2 часа дня', '2 pm'],
+            28 => ['строка не содержит дату', false],
+            29 => ['Завтра утром', 'tomorrow 9 am'],
+            30 => ['сегодня, часиков в 9', 'today 9 am'],
+            31 => ['перенести на следующий четверг?', 'next week thursday', true],
+            32 => ['Может быть перенести на следующий воскресенье?', 'next week sunday', true],
+            33 => ['Давайте числа двадцатого августа', '20 august'],
+            34 => ['Удобно будет в пятницу', 'friday', true],
+            35 => ['Предлагаю созвониться через неделю', '+1 week'],
+            36 => ['Предлагаю встретиться через недельку', '+1 week'],
+            37 => ['Заказ делал вчера', '-1 day'],
+            38 => ['Неделю назад должны были привезти', '-1 week'],
+            39 => ['Я был у Вас в офисе позавчера', '-2 days'],
+            40 => ['Где-нибудь через месяц я буду готов', '+1 month'],
+            41 => ['Может быть позвонить в пол 9?', '9:00 -30 min'],
+            42 => ['через 3 дня', '+3 days'],
+            43 => ['послезавтра в обед', '+2 days noon'],
+            44 => ['завтра в 2 часа дня', 'tomorrow 2 pm'],
+            45 => ['через 7 дней', '+7 days'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataProviderStripWhitespace()
+     */
+    public function testStripWhitespace($string, $expected)
+    {
+        $string = self::$parsers['all']->stripWhitespace($string);
+
+        $this->assertEquals($expected, $string);
+    }
+
+    public function dataProviderStripWhitespace()
+    {
+        return [
+            [' TimeParser ', 'TimeParser'],
+            ["\x20 Time \x20 Parser \x20", 'Time Parser'],                          // U+0020 SPACE
+            ["\xc2\xa0 Time \xc2\xa0 Parser \xc2\xa0", 'Time Parser'],              // U+00A0 NO-BREAK SPACE
+            ["\xe1\x9a\x80 Time \xe1\x9a\x80 Parser \xe1\x9a\x80", 'Time Parser'],  // U+1680 OGHAM SPACE MARK
+            ["\xe2\x80\x80 Time \xe2\x80\x80 Parser \xe2\x80\x80", 'Time Parser'],  // U+2000 EN QUAD
+            ["\xe2\x80\x81 Time \xe2\x80\x81 Parser \xe2\x80\x81", 'Time Parser'],  // U+2001 EM QUAD
+            ["\xe2\x80\x82 Time \xe2\x80\x82 Parser \xe2\x80\x82", 'Time Parser'],  // U+2002 EN SPACE
+            ["\xe2\x80\x83 Time \xe2\x80\x83 Parser \xe2\x80\x83", 'Time Parser'],  // U+2003 EM SPACE
+            ["\xe2\x80\x84 Time \xe2\x80\x84 Parser \xe2\x80\x84", 'Time Parser'],  // U+2004 THREE-PER-EM SPACE
+            ["\xe2\x80\x85 Time \xe2\x80\x85 Parser \xe2\x80\x85", 'Time Parser'],  // U+2005 FOUR-PER-EM SPACE
+            ["\xe2\x80\x86 Time \xe2\x80\x86 Parser \xe2\x80\x86", 'Time Parser'],  // U+2006 SIX-PER-EM SPACE
+            ["\xe2\x80\x87 Time \xe2\x80\x87 Parser \xe2\x80\x87", 'Time Parser'],  // U+2007 FIGURE SPACE
+            ["\xe2\x80\x88 Time \xe2\x80\x88 Parser \xe2\x80\x88", 'Time Parser'],  // U+2008 PUNCTUATION SPACE
+            ["\xe2\x80\x89 Time \xe2\x80\x89 Parser \xe2\x80\x89", 'Time Parser'],  // U+2009 THIN SPACE
+            ["\xe2\x80\x8a Time \xe2\x80\x8a Parser \xe2\x80\x8a", 'Time Parser'],  // U+200A HAIR SPACE
+            ["\xe2\x80\xaf Time \xe2\x80\xaf Parser \xe2\x80\xaf", 'Time Parser'],  // U+202F NARROW NO-BREAK SPACE
+            ["\xe2\x81\x9f Time \xe2\x81\x9f Parser \xe2\x81\x9f", 'Time Parser'],  // U+205F MEDIUM MATHEMATICAL SPACE
+            ["\xe3\x80\x80 Time \xe3\x80\x80 Parser \xe3\x80\x80", 'Time Parser'],  // U+3000 IDEOGRAPHIC SPACE
         ];
     }
 
@@ -96,5 +192,94 @@ class TimeParserTest extends TestCase
         if ($expected !== false) {
             $expected = $date->modify($expected)->format('r');
         }
+    }
+
+    /**
+     * @dataProvider dataProviderFrench()
+     */
+    public function testFrench($string, $expected, $midnight = false)
+    {
+        $result = self::$parsers['all']->parse($string, true);
+
+        $this->prepareDate($result, $expected, $midnight);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function dataProviderFrench()
+    {
+        return [
+            0 => ['Demain matin s\'il vous plait', 'tomorrow 9 am'],
+            1 => ['Pourriez-vous rappeler vers 9 heures s\'il vous plaît.', 'today 9 am'],
+            2 => ['Pouvons-nous reporter notre conversation à jeudi prochaine?', 'next week thursday', true],
+            3 => ['le 20 août', '20 august'],
+            4 => ['Le vendredi me convient bien', 'friday'],
+            5 => ['Je propose de téléphoner dans une semaine', '+1 week'],
+            6 => ['Je suggère de se rencontrer dans une semaine', '+1 week'],
+            7 => ['J\'ai fait une commande hier', '-1 day'],
+            8 => ['Il était censé être livré à la semaine dernière', '-1 week'],
+            9 => ['J\'étais dans votre bureau avant-hier.', '-2 days'],
+            10 => ['Je serai prêt environ dans un mois', '+1 month'],
+            11 => ['après trois mois', '+3 month'],
+            12 => ['Dois-je vous appeler à huit heures et 9?', '9:00 -30 min'],
+            13 => ['Il y a 5 semaines', '-5 week'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataProviderGerman()
+     */
+    public function testGerman($string, $expected, $midnight = false)
+    {
+        $result = self::$parsers['all']->parse($string, true);
+
+        $this->prepareDate($result, $expected, $midnight);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function dataProviderGerman()
+    {
+        return [
+            0 => ['Morgen frueh bitte', 'tomorrow 9 am'],
+            1 => ['Rufen Sie bitte heute spaeter an, circa am 9 Uhr.', 'today 9 am'],
+            2 => ['Koennen wir vielleicht unseren Gespraech am nächsten Donnerstag verschieben?', 'next week thursday', true],
+            3 => ['Lassen wir im 20 August, dazu kommen', '20 august'],
+            4 => ['Freitag passt super', 'friday'],
+            5 => ['Ich schlage vor am naechste Woche per Handy noch wieder zu kommunizieren', '+1 week'],
+            6 => ['Treffen wir uns am naechste Woche', '+1 week'],
+            7 => ['Ich hab\'s gestern bestellt', '-1 day'],
+            8 => ['Es soll letzte Woche geliefert wurde', '-1 week'],
+            9 => ['I war vorgestern bei Ihnen im Buero.', '-2 days'],
+            10 => ['Ich bin irgendwie nach einem Monat dazu bereit ', '+1 month'],
+            11 => ['Vielleicht macht es Sinn um halb 9 anzurufen?', '9:00 -30 min'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataProviderSpanish()
+     */
+    public function testSpanish($string, $expected, $midnight = false)
+    {
+        $result = self::$parsers['all']->parse($string, true);
+
+        $this->prepareDate($result, $expected, $midnight);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function dataProviderSpanish()
+    {
+        return [
+            0 => ['Hablemos mañana por la mañana, por favor', 'tomorrow 9 am'],
+            1 => ['¿Podría volver a llamarme hoy a las 9?', 'today 9 am'],
+            2 => ['¿Podríamos posponerlo para el jueves que viene?', 'next week thursday', true],
+            3 => ['Vamos hacerlo en veinte de Agosto.', '20 august'],
+            4 => ['El viernes parece estar bien.', 'friday'],
+            5 => ['Volvamos a hablar por teléfono en una semana, si le conviene.', '+1 week'],
+            6 => ['Sugiero que nos reunamos en una semana.', '+1 week'],
+            7 => ['Hice el pedido ayer', '-1 day'],
+            8 => ['Deberían haberlo traído la semana pasada', '-1 week'],
+            9 => ['Llegé a la oficina anteayer.', '-2 days'],
+            10 => ['En un mes estaré listo.', '+1 month'],
+            11 => ['¿Cómo le parece llamar a las 9 y media?', '9:00 -30 min'],
+        ];
     }
 }

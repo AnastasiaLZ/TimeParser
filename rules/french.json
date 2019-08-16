@@ -2,20 +2,45 @@
     "language": "French",
     "rules": {
         "absolute": {
-            "time": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~",
-            "weekday": "~(en)? (?<pronoun>cette|ce|prochaine) (?<weekday>lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)~",
-            "year": "~((?<pronoun>cette|ce|prochaine)|((?<digit>[[:digit:]]+))) année~u",
-            "month": "~((?<pronoun>cette|ce|prochaine) mois|(?<month>janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))~u",
-            "week": "~(?<pronoun>cette|ce|prochaine) semaine~u"
+            "$year-$month-$digit": "~((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) (?<month>janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)( (?<year>[[:digit:]]{4}))?~u",
+            "$hour:$min:$sec": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~",
+            "$hour:$min": "~(?<hour>\\d{1,2})(\\:(?<min>\\d{2}))? heures~u",
+            "$hour:00 $timeshift": "~(?<timeshift>huit) heures et (?<hour>\\d{1,2})~u",
+            "$pronoun week $weekday": "~(en)? (?<pronoun>cette|ce|prochain(e)?) (?<weekday>lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)~",
+            "$weekday $pronoun week": "~(?<weekday>lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\\ ?(?<pronoun>cette|ce|prochain(e)?)?~",
+            "$pronoun year": "~(?<pronoun>cette|ce|prochain(e)?) année~u",
+            "$digit-$month-$day": "~(?<digit>[[:digit:]]+) année~u",
+            "$pronoun month": "~(?<pronoun>cette|ce|prochain(e)?) mois~u",
+            "$year-$month-$day": "~\\b(?<month>janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)\\b~u",
+            "$pronoun week": "~(?<pronoun>cette|ce|prochain(e)?) semaine~u",
+            "9 am": "~matin~u",
+            "6 pm": "~soir~u",
+            "9 pm": "~nuit~u",
+            "2 pm": "~dans l'après midi~u"
         },
         "relative": {
-            "hour": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) heures?)~u",
-            "minute": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) minutes?)~u",
-            "sec": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) secondes?)~u",
-            "year": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) années?)~u",
-            "week": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) semaines?)~u",
-            "day": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) jours?)~u",
-            "month": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+)) mois?)~u"
+            "@relative": "~((dans|après)(?<relative>((((?<!dans)(\\set|,))?\\s(\\d+|\\pL+(\\s\\pL+)?))\\s(heures|minutes?|secondes?|années|semaines|jours|mois)){2,}))~u",
+            "@relative_split": "~(\\set|,)\\s~u",
+            "@relative_join": "(dans|après)",
+            "+$1 hour": "~((dans|après)( un)?( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? heure(s?))~u",
+            "+$1 minute": "~((dans|après)( un)?( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? minute(s?))~u",
+            "+$1 sec": "~((dans|après)( un)?( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? seconde(s?))~u",
+            "+$1 year": "~((dans|après)( un)?( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? année(s?))~u",
+            "+$1 week": "~((dans|après)( un)?( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? semaine(s?))~u",
+            "+$1 day": "~((dans|après)( un)?( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? jour(s?))~u",
+            "+$1 month": "~((dans|après)( un)?( ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)))? moi(s?)s)~u",
+            "-$1 hour": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+))? heure(s?)( ?dernière)?)~u",
+            "-$1 minute": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+))? minute(s?)( ?dernière)?)~u",
+            "-$1 sec": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+))? seconde(s?)( ?dernière)?)~u",
+            "-$1 year": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+))? année(s?)( ?dernière)?)~u",
+            "-$1 week": "~((bout ?)?(de|la ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+))? semaine(s?)( ?dernière)?)~u",
+            "-$1 day": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+))? jour(s?)( ?dernière)?)~u",
+            "-$1 month": "~((bout ?)?(de ?)?((?<digit>[[:digit:]]+)|(?<alpha>[[:alpha:]]+))? moi(s?)( ?dernière)?)~u",
+            "+1 day": "~\\bdemain\\b~u",
+            "+2 day": "~\\baprès-demain\\b~u",
+            "-2 day": "~\\bavant-hier\\b~u",
+            "-1 day": "~\\bhier\\b~u",
+            "+0 day": "~\\baujourd'hui\\b~u"
         }
     },
     "week_days": {
@@ -31,7 +56,8 @@
         "ce": "this",
         "suivant": "next",
         "cette": "this",
-        "prochaine": "next"
+        "prochaine": "next",
+        "prochain": "next"
     },
     "months": {
         "janvier": "january",
@@ -68,5 +94,8 @@
         "dix-huit": 18,
         "dix-neuf": 19,
         "vingt": 20
+    },
+    "timeshift": {
+        "huit": "-30 min"
     }
 }

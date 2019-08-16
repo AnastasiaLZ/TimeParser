@@ -2,12 +2,12 @@ TimeParser
 =====
 A parser for date and time written in natural language for PHP.
 
-[![Composer package](http://composer.network/badge/wapmorgan/time-parser)](https://packagist.org/packages/wapmorgan/time-parser) [![Latest Stable Version](https://poser.pugx.org/wapmorgan/time-parser/v/stable)](https://packagist.org/packages/wapmorgan/time-parser) [![Total Downloads](https://poser.pugx.org/wapmorgan/time-parser/downloads)](https://packagist.org/packages/wapmorgan/time-parser) [![Latest Unstable Version](https://poser.pugx.org/wapmorgan/time-parser/v/unstable)](https://packagist.org/packages/wapmorgan/time-parser) [![License](https://poser.pugx.org/wapmorgan/time-parser/license)](https://packagist.org/packages/wapmorgan/time-parser) [![Testing](https://travis-ci.org/wapmorgan/TimeParser.svg?branch=master)](https://travis-ci.org/wapmorgan/TimeParser)
+[![Latest Stable Version](https://poser.pugx.org/wapmorgan/time-parser/v/stable)](https://packagist.org/packages/wapmorgan/time-parser) [![Total Downloads](https://poser.pugx.org/wapmorgan/time-parser/downloads)](https://packagist.org/packages/wapmorgan/time-parser) [![Latest Unstable Version](https://poser.pugx.org/wapmorgan/time-parser/v/unstable)](https://packagist.org/packages/wapmorgan/time-parser) [![License](https://poser.pugx.org/wapmorgan/time-parser/license)](https://packagist.org/packages/wapmorgan/time-parser) [![Build Status](https://travis-ci.org/wapmorgan/TimeParser.svg?branch=master)](https://travis-ci.org/wapmorgan/TimeParser)
 
-1. Installation
-2. Usage
-3. Languages support
-5. ToDo
+1. [Installation](#installation)
+2. [Usage](#usage)
+3. [Languages support](#languages-support)
+5. [ToDo](#languages-todo)
 
 ## Installation
 The preferred way to install package is via composer:
@@ -17,11 +17,13 @@ composer require wapmorgan/time-parser
 ```
 
 ## Usage
-Parse some input from user and receive a `DateTime` object.
+Parse some input from user and receive a `DateTimeImmutable` object.
 
 1. Create a Parser object
     ```php
-    $parser = new wapmorgan\TimeParser\TimeParser('all');
+    use wapmorgan\TimeParser\TimeParser;
+
+    $parser = new TimeParser('all');
     ```
 
     First argument is a language. Applicable values:
@@ -30,15 +32,7 @@ Parse some input from user and receive a `DateTime` object.
     * `'russian'` - scan only as string written in one language.
     * `array('english', 'russian')` - scan as english and then the rest as russian.
 
-2. Enable and disable parsing of alphabetic values.
-    ```php
-    // To enable alphabetic parsing.
-    $parser->allowAlphabeticUnits();
-    // To disable alphabetic parsing.
-    $parser->disallowAlphabeticUnits();
-    ```
-
-3. Parse string and return a `DateTimeImmutable` object. If second argument is `true`, method will return `false` when no date&time strings found. If third parameter is provided, then it is filled with the string obtained after all the transformations.
+2. Parse string and return a `DateTimeImmutable` object. If second argument is `true`, method will return `false` when no date&time strings found. If third parameter is provided, then it is filled with the string obtained after all the transformations.
     ```php
     $datetime = $parser->parse(fgets(STDIN));
     // next call returns false
@@ -46,26 +40,15 @@ Parse some input from user and receive a `DateTime` object.
     // $result will contains "we will come "
     $datetime = $parser->parse('We will come in a week', true, $result);
     ```
-4. For advanced parsing of alphabetic values is used built-in function. You can specify your own handler for this feature. Сurrently is used for russian and english languages only.
-    ```
-    use wapmorgan\TimeParser\TimeParser;
-
-    // $string will contains alphabetic value for advanced parsing. 
-    // Ex.: for string "in twenty five minutes", it will contains "twenty five".
-    // $lang will contains name of the parsed language.
-    TimeParser::setWordsToNumberCallback(function($string, $lang) {
-        // do some magic
-    });
-    ```
-5. You can add your own custom language.
+3. You can add your own custom language.
     ```php
-    // $date must be an array with a structure like the existing rules.
-    $parser->addLanguage($data);
+    $parser->addLanguage(wapmorgan\TimeParser\Interfaces\LanguageInterface $language);
     ```
 
 ## Languages support
 For this moment four languages supported: Russian, English, French and German. Two languages support is in progress: Chinese, Spanish.
-Their rules are in `rules` catalog so you can improve TimeParser by adding new language or by improving existing one.
+Their rules are in `rules` catalog so you can improve TimeParser by adding new language or by improving existing one.  
+You can use your own classes for each language, the class must implement interface `wapmorgan\TimeParser\Interfaces\LanguageInterface`. For example you can extend class `wapmorgan\TimeParser\Language`
 
 Languages with examples of strings containing date&time:
 
@@ -81,9 +64,9 @@ Languages with examples of strings containing date&time:
 For developing reasons you may would like to see process of parsing. To do this call related methods:
 
 ```php
-TimeParser::enableDebug();
+$parser->setDebug(true);
 // and
-TimeParser::disableDebug();
+$parser->setDebug(false);
 ```
 
 ### Parsable substrings
@@ -111,12 +94,8 @@ To understand, how it works, look at substrings separately:
 * **5 minutes ago** - relative date (russian, english only)
 * **вчера** - relative date (russian, english only)
 * **yesterday** - relative date (russian, english only)
-
-## ToDo
-
-- [x] Tests.
-- [ ] Try to parse combinations: *in 5 hours and 2 minutes*.
-- [x] Try to parse alphabetic offsets: *in five hours* and *через пять часов*.
+* **через 5 часов и пять минут** - relative combinations (russian, english only)
+* **in 5 hours and 2 minutes** - relative combinations (russian, english only)
 
 ### Languages ToDo
 
