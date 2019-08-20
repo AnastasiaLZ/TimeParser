@@ -3,9 +3,8 @@
     "rules": {
         "absolute": {
             "$year-$month-$digit": "~((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) (?<month>enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)( (?<year>[[:digit:]]{4})( años?)?)?~u",
-            "$hour:$min:$sec": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~u",
             "$hour:00 $timeshift": "~(?<hour>\\d{1,2}) y (?<timeshift>media)~u",
-            "$hour:$min": "~(?<hour>\\d{1,2})(\\:(?<min>\\d{2}))?~u",
+            "$digit:00": "~(a |de )?(las|los|hasta) ((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?))~u",
             "$pronoun week $weekday": "~(en|el) (?<pronoun>este|próximo) (?<weekday>lunes|martes|miércoles|jueves|viernes|sábado|domingo)~iu",
             "$weekday $pronoun week": "~(?<weekday>lunes|martes|miércoles|jueves|viernes|sábado|domingo)\\ ?(?<pronoun>pasad[oa]|que viene)?~",
             "$pronoun year": "~(en|el) (?<pronoun>este|próximo) año~iu",

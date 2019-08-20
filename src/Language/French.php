@@ -10,16 +10,24 @@
 
 namespace wapmorgan\TimeParser\Language;
 
+use Psr\Log\LoggerInterface;
+use wapmorgan\TimeParser\Exceptions\TimeParserException;
 use wapmorgan\TimeParser\Language;
 
 class French extends Language
 {
-    public function __construct()
+    /**
+     * French constructor.
+     * @param LoggerInterface $logger
+     * @throws TimeParserException
+     */
+    public function __construct(LoggerInterface $logger)
     {
         $data = static::findRuleByName('French');
         $data = static::validateData($data);
 
         parent::__construct(
+            $logger,
             $data['name'],
             $data['absolute'],
             $data['relative'],

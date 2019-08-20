@@ -12,34 +12,22 @@ namespace wapmorgan\TimeParser\Traits;
 
 trait LanguageGetterTrait
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getAbsoluteRules()
+    public function getAbsoluteRules(): array
     {
         return $this->absoluteRules;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getRelativeRules()
+    public function getRelativeRules(): array
     {
         return $this->relativeRules;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getRules()
+    public function getRules(): array
     {
         return [
             'absolute' => $this->getAbsoluteRules(),
@@ -47,34 +35,22 @@ trait LanguageGetterTrait
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getMonths()
+    public function getMonths(): array
     {
         return $this->months;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getPronouns()
+    public function getPronouns(): array
     {
         return $this->pronouns;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getUnits()
+    public function getUnits(): array
     {
         return $this->units;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getWeekDays()
+    public function getWeekDays(): array
     {
         return $this->weekDays;
     }

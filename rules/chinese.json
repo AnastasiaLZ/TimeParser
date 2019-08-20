@@ -2,7 +2,6 @@
     "language": "Chinese",
     "rules": {
         "absolute": {
-            "$hour:$min:$sec": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~",
             "$pronoun week $weekday": "~(?<pronoun>这|下)(?<weekday>星期一|星期二|星期三|星期四|星期五|星期六|星期天)~u",
             "$pronoun year": "~(?<pronoun>这|下)年~u",
             "$digit-$month-$day": "~(?<digit>[[:digit:]]+)年~u",

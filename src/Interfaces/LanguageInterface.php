@@ -10,6 +10,7 @@
 
 namespace wapmorgan\TimeParser\Interfaces;
 
+use DateTimeImmutable;
 use wapmorgan\TimeParser\TimeParser;
 
 interface LanguageInterface
@@ -19,112 +20,112 @@ interface LanguageInterface
      *
      * @return string
      */
-    public function getName();
+    public function getName(): string;
 
     /**
      * Get list of absolute rules.
      *
      * @return array
      */
-    public function getAbsoluteRules();
+    public function getAbsoluteRules(): array;
 
     /**
      * Get listof absolute rules.
      *
      * @return array
      */
-    public function getRelativeRules();
+    public function getRelativeRules(): array;
 
     /**
      * Get both absolute and relative rules.
      *
      * @return array
      */
-    public function getRules();
+    public function getRules(): array;
 
     /**
      * Get list of months.
      *
      * @return array
      */
-    public function getMonths();
+    public function getMonths(): array;
 
     /**
      * Get list of pronouns.
      *
      * @return array
      */
-    public function getPronouns();
+    public function getPronouns(): array;
 
     /**
      * Get list of units.
      *
      * @return array
      */
-    public function getUnits();
+    public function getUnits(): array;
 
     /**
      * Get list of days of week.
      *
      * @return array
      */
-    public function getWeekDays();
+    public function getWeekDays(): array;
 
     /**
      * @param string $string
      *
      * @return int
      */
-    public function translateMonth($string);
+    public function translateMonth(string $string): int;
 
     /**
      * @param string $string
-     * @param mixed  $default
+     * @param string $default
      *
      * @return string
      */
-    public function translatePronoun($string);
+    public function translatePronoun(string $string, string $default = 'this'): string;
 
     /**
      * @param string $string
-     * @param mixed  $default
      *
      * @return string
      */
-    public function translateUnit($string);
+    public function translateUnit(string $string): string;
 
     /**
      * @param string $string
-     * @param mixed  $default
      *
      * @return string
      */
-    public function translateWeekDay($string);
+    public function translateWeekDay(string $string): string;
 
     /**
-     * @param TimeParser $timeParser
+     * @param string $string
+     *
+     * @return string
      */
-    public function setTimeParser(TimeParser $timeParser);
+    public function translateTimeShift(string $string): string;
 
     /**
      * Try to translate words to number.
      *
      * @param string $string
      *
-     * @return int|bool
+     * @return int|null
      */
-    public function wordsToNumber($string);
+    public function wordsToNumber(string $string): ?int;
 
     /**
      * Parses absolute rules.
      *
-     * @param string             $rule
-     * @param array              $matches
-     * @param \DateTimeImmutable $datetime
+     * @param string            $rule
+     * @param array             $matches
+     * @param DateTimeImmutable $datetime
      *
-     * @return \DateTimeImmutable
+     * @return DateTimeImmutable
      */
-    public function parseAbsolute($rule, array $matches, $datetime);
+    public function parseAbsolute(string $rule, array $matches, DateTimeImmutable $datetime): DateTimeImmutable;
 
     /**
      * Parses relative rules.
@@ -135,5 +136,5 @@ interface LanguageInterface
      *
      * @return \DateTimeImmutable
      */
-    public function parseRelative($rule, array $matches, $datetime);
+    public function parseRelative(string $rule, array $matches, DateTimeImmutable $datetime): DateTimeImmutable;
 }

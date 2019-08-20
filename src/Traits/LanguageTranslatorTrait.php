@@ -12,7 +12,11 @@ namespace wapmorgan\TimeParser\Traits;
 
 trait LanguageTranslatorTrait
 {
+    /**
+     * @var array
+     */
     protected $validPronouns = ['last', 'this', 'next'];
+
     /**
      * @var array
      */
@@ -32,9 +36,10 @@ trait LanguageTranslatorTrait
     ];
 
     /**
-     * {@inheritdoc}
+     * @param string $string
+     * @return int
      */
-    public function translateMonth($string)
+    public function translateMonth(string $string): int
     {
         $month = isset($this->months[$string])
             ? $this->months[$string]
@@ -46,44 +51,37 @@ trait LanguageTranslatorTrait
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $string
+     * @param string $default
+     * @return string
      */
-    public function translatePronoun($string)
+    public function translatePronoun(string $string, string $default = 'this'): string
     {
         $pronoun = isset($this->pronouns[$string])
             ? $this->pronouns[$string]
-            : 'this';
+            : $default;
 
-        return in_array($pronoun, $this->validPronouns, true) ? $pronoun : 'this';
+        return in_array($pronoun, $this->validPronouns, true) ? $pronoun : $default;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function translateUnit($string, $default = null)
+    public function translateUnit(string $string): string
     {
         return isset($this->units[$string])
             ? $this->units[$string]
-            : (null === $default ? $string : $default);
+            : $string;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function translateWeekDay($string, $default = null)
+    public function translateWeekDay(string $string): string
     {
         return isset($this->weekDays[$string])
             ? $this->weekDays[$string]
-            : (null === $default ? $string : $default);
+            : $string;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function translateTimeShift($string, $default = null)
+    public function translateTimeShift(string $string): string
     {
         return isset($this->timeshift[$string])
             ? $this->timeshift[$string]
-            : (null === $default ? $string : $default);
+            : $string;
     }
 }

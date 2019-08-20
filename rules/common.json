@@ -1,0 +1,14 @@
+{
+  "language": "Common",
+  "rules": {
+    "absolute": {
+      "$hour:$min:$sec": "~((?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~u"
+    },
+    "relative": {}
+  },
+  "week_days": {},
+  "pronouns": {},
+  "months": {},
+  "units": {},
+  "timeshift": {}
+}

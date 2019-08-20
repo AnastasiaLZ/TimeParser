@@ -5,7 +5,6 @@
             "$pronoun month": "~(?<pronoun>this|next|last) month~",
             "$year-$month-$day": "~in (?<month>january|february|march|april|may|june|july|august|september|october|november|december)~",
             "$day.$month.$year": "~(?<month>january|february|march|april|may|june|july|august|september|october|november|december) the (?<day>\\d{1,2})th~",
-            "$hour:$min:$sec": "~((at )?(?<hour>\\d{1,2})\\:(?<min>\\d{2})(\\:(?<sec>\\d{2}))?)~",
             "$pronoun week $weekday": "~(on )?(?<pronoun>next|this|last) (?<weekday>monday|tuesday|wednesday|thursday|friday|saturday|sunday)~",
             "$year-$month-$digit": "~((?<digit>[[:digit:]]+)|(?<alpha>\\pL+( \\pL+)?)) (?<month>january|february|march|april|may|june|july|august|september|october|november|december)( (?<year>[[:digit:]]{4})( year)?)?~",
             "$pronoun year": "~(?<pronoun>this|next|last) year(?!s)~",
