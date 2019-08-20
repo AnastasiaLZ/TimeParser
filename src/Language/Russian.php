@@ -10,6 +10,8 @@
 
 namespace wapmorgan\TimeParser\Language;
 
+use Psr\Log\LoggerInterface;
+use wapmorgan\TimeParser\Exceptions\TimeParserException;
 use wapmorgan\TimeParser\Language;
 
 class Russian extends Language
@@ -19,12 +21,18 @@ class Russian extends Language
     // const WEEK_DAYS = '(?<weekday>п(онедельник|н)|вт(орник)?|ср(еду)?|ч(етверг|т)|п(ятницу|т)|с(убботу|б)|в(оскресен[ьи]е|c))';
     // const TIME      = '(?<hour>\d{1,2})( час(а|ов)?|\:(?<min>\d{2})(\:(?<sec>\d{2}))?)';
 
-    public function __construct()
+    /**
+     * Russian constructor.
+     * @param LoggerInterface $logger
+     * @throws TimeParserException
+     */
+    public function __construct(LoggerInterface $logger)
     {
         $data = static::findRuleByName('Russian');
         $data = static::validateData($data);
 
         parent::__construct(
+            $logger,
             $data['name'],
             $data['absolute'],
             $data['relative'],

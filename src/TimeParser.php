@@ -11,7 +11,8 @@
 namespace wapmorgan\TimeParser;
 
 use DateTimeImmutable;
-use Exception;
+use Psr\Log\LoggerInterface;
+use wapmorgan\TimeParser\Exceptions\TimeParserException;
 
 class TimeParser
 {
@@ -21,100 +22,111 @@ class TimeParser
     const VERSION = '3.0.0-DEV';
 
     /**
-     * @var array
+     * @var Language[]
      */
     protected $languages;
-    /**
-     * @var bool
-     */
-    protected $debug = false;
 
     /**
-     * @param mixed $languages
+     * @var Language
+     */
+    protected $commonRules;
+
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
+    /**
+     * @param LoggerInterface $logger
+     * @param string[]        $languages
      *
-     * @throws Exception
+     * @throws TimeParserException
      */
-    public function __construct($languages = null)
+    public function __construct(LoggerInterface $logger, array $languages = null)
     {
-        if (is_string($languages)) {
-            $languages = [$languages];
-        }
+        $this->commonRules = Language::createFromName($logger, 'common');
 
-        if (is_array($languages)) {
-            $rules     = static::getAvailableRules();
-            $classes   = static::getAvailableLanguages();
-            $available = array_merge($rules, $classes);
+        $this->logger = $logger;
+
+        $rules     = static::getAvailableRules();
+        $classes   = static::getAvailableLanguages();
+        $available = array_merge($rules, $classes);
+
+        if (!is_null($languages)) {
             $languages = array_map('mb_strtolower', array_filter($languages, 'is_string'));
+            $available = array_intersect($languages, $available);
+            $unknown   = array_diff($languages, $available);
 
-            if ($languages !== ['all']) {
-                $available = array_intersect($languages, $available);
-                $unknown   = array_diff($languages, $available);
-
-                if (empty($available) || $unknown) {
-                    throw new Exception(sprintf(
-                        'Unknown language used: %s',
-                        implode(', ', $unknown)
-                    ));
-                }
-            }
-
-            foreach ($available as $name) {
-                if (in_array($name, $classes)) {
-                    $class = 'wapmorgan\\TimeParser\\Language\\'.ucfirst($name);
-                    $class = new $class();
-
-                    $this->addLanguage($class);
-                } else {
-                    $this->addLanguage(Language::createFromName($name));
-                }
+            if (empty($available) || $unknown) {
+                throw new TimeParserException(sprintf(
+                    'Unknown language used: %s',
+                    implode(', ', $unknown)
+                ));
             }
         }
-    }
 
-    /**
-     * Enables or disables debugging messages.
-     *
-     * @param bool $debug
-     *
-     * @return TimeParser
-     */
-    public function setDebug($debug = false)
-    {
-        $this->debug = (bool) $debug;
+        foreach ($available as $name) {
+            if (in_array($name, $classes)) {
+                $class = 'wapmorgan\\TimeParser\\Language\\'.ucfirst($name);
+                $class = new $class($logger);
 
-        return $this;
+                $this->addLanguage($class);
+            } else {
+                $this->addLanguage(Language::createFromName($logger, $name));
+            }
+        }
     }
 
     /**
      * Parses the string to receive a DateTime object from it.
      *
-     * @param string  $string              The input string
-     * @param bool    $falseWhenNotChanged Return false if parsing had no effect
-     * @param string &$result
+     * @param string                 $string
+     * @param DateTimeImmutable|null $initialDate
      *
-     * @return bool|DateTimeImmutable
-     * @throws Exception
+     * @return DateTimeImmutable|null
+     *
+     * @throws TimeParserException
      */
-    public function parse($string, $falseWhenNotChanged = false, &$result = null)
+    public function parse(string $string, ?DateTimeImmutable $initialDate = null): ?ParsedDateTime
     {
         if (empty($this->languages) || !is_array($this->languages)) {
-            throw new Exception('You must add at least one language.');
+            throw new TimeParserException('You must add at least one language.');
         }
 
-        $datetime = $current = new DateTimeImmutable();
-        $matches  = null;
-        $text = $this->prepareString($string);
+        $datetime      = !is_null($initialDate) ? $initialDate : new DateTimeImmutable();
+        $matches       = null;
+        $text          = $this->prepareString($string);
+        $matchesResult = [];
 
         $language = $this->detectLang($text);
 
-        if (!$language) {
-            return $falseWhenNotChanged ? false : $datetime;
+        if ($language) {
+            foreach ($language->getRules() as $type => $rules) {
+                $method = 'parse'.ucfirst($type);
+
+                if (!method_exists($language, $method)) {
+                    continue;
+                }
+
+                foreach ($rules as $rule => $patterns) {
+                    if (!is_array($patterns)) {
+                        $patterns = [$patterns];
+                    }
+
+                    foreach ($patterns as $pattern) {
+                        while ($language->match($pattern, $text, $matches)) {
+                            $matchesResult[$pattern] = $matches;
+                            $datetime                = call_user_func([$language, $method], $rule, $matches, $datetime);
+                        }
+                    }
+                }
+            }
         }
 
-        foreach ($language->getRules() as $type => $rules) {
+        foreach ($this->commonRules->getRules() as $type => $rules) {
             $method = 'parse'.ucfirst($type);
 
-            if (!method_exists($language, $method)) {
+            if (!method_exists($this->commonRules, $method)) {
                 continue;
             }
 
@@ -124,16 +136,23 @@ class TimeParser
                 }
 
                 foreach ($patterns as $pattern) {
-                    while ($this->match($pattern, $text, $matches)) {
-                        $datetime = call_user_func([$language, $method], $rule, $matches, $datetime);
+                    while ($this->commonRules->match($pattern, $text, $matches)) {
+                        $matchesResult[$pattern] = $matches;
+                        $datetime                = call_user_func([$this->commonRules, $method], $rule, $matches, $datetime);
                     }
                 }
             }
         }
 
-        $result = $text;
+        if (empty($matchesResult)) {
+            return null;
+        }
 
-        return $datetime;
+        $langName = $language ? $language->getName() : $this->commonRules->getName();
+
+        $result = new ParsedDateTime($datetime, $matchesResult, $text, $langName);
+
+        return $result;
     }
 
     /**
@@ -143,11 +162,9 @@ class TimeParser
      *
      * @return TimeParser
      */
-    public function addLanguage(Interfaces\LanguageInterface $language)
+    public function addLanguage(Interfaces\LanguageInterface $language): TimeParser
     {
         $name = mb_strtolower($language->getName());
-
-        $language->setTimeParser($this);
 
         $this->languages[$name] = $language;
 
@@ -159,11 +176,11 @@ class TimeParser
      *
      * @return array The available rules
      */
-    public static function getAvailableRules()
+    public static function getAvailableRules(): array
     {
         return array_map(function ($lang) {
             return strtolower(basename($lang, '.json'));
-        }, glob(__DIR__.'/../rules/*.json'));
+        }, glob(__DIR__.'/../rules/[^common].json'));
     }
 
     /**
@@ -171,7 +188,7 @@ class TimeParser
      *
      * @return array The available languages classes
      */
-    public static function getAvailableLanguages()
+    public static function getAvailableLanguages(): array
     {
         return array_map(function ($lang) {
             return strtolower(basename($lang, '.php'));
@@ -179,72 +196,11 @@ class TimeParser
     }
 
     /**
-     * Prints the debug message.
-     *
-     * @param string $message
-     */
-    public function debug($message)
-    {
-        static $isCli;
-
-        if (!$this->debug) {
-            return;
-        }
-
-        if (null === $isCli) {
-            $isCli = defined('STDIN');
-        }
-
-        $message = htmlspecialchars($message).PHP_EOL;
-
-        if (!$isCli) {
-            $message = nl2br($message);
-        }
-
-        echo $message;
-    }
-
-    /**
-     * Strips whitespace from the beginning and end of a string and replaces repeated spaces with one.
-     *
-     * @param string $string The input string
-     *
-     * @return string The stripped string
-     */
-    public function stripWhitespace($string)
-    {
-        return preg_replace(['/^[\pZ\pC]+|[\pZ\pC]+$/u', '/[\pZ\pC]{1,}/u'], ['', ' '], $string);
-    }
-
-    /**
-     * Searches string for a match to the regular expression given in pattern.
-     *
-     * @param string $pattern  The pattern to search for, as a string
-     * @param string &$string  The input string
-     * @param array  &$matches The matches fills with the results of search
-     *
-     * @return bool
-     */
-    public function match($pattern, &$string, &$matches)
-    {
-        if (preg_match($pattern, $string, $matches, PREG_OFFSET_CAPTURE)) {
-            $string = substr($string, 0, $matches[0][1]).substr($string, $matches[0][1] + strlen($matches[0][0]));
-            $string = $this->stripWhitespace($string);
-
-            $this->debug('Matched: '.$pattern);
-
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * @param string $string
      *
      * @return string
      */
-    protected function prepareString($string)
+    protected function prepareString(string $string): string
     {
         if (function_exists('mb_strtolower')) {
             if (($encoding = mb_detect_encoding($string)) != 'UTF-8') {
@@ -260,16 +216,29 @@ class TimeParser
     }
 
     /**
+     * Strips whitespace from the beginning and end of a string and replaces repeated spaces with one.
+     *
+     * @param string $string The input string
+     *
+     * @return string The stripped string
+     */
+    public function stripWhitespace(string $string): string
+    {
+        return preg_replace(['/^[\pZ\pC]+|[\pZ\pC]+$/u', '/[\pZ\pC]{1,}/u'], ['', ' '], $string);
+    }
+
+    /**
      * @param $text
      *
      * @return Language|null
      */
-    private function detectLang($text)
+    private function detectLang(string $text): ?Language
     {
         $matchesCount = [];
 
-        /** @var  Language $language */
+        /** @var Language $language */
         foreach ($this->languages as $key => $language) {
+            $string             = $text;
             $matchesCount[$key] = 0;
             foreach ($language->getRules() as $type => $rules) {
                 $method = 'parse'.ucfirst($type);
@@ -284,17 +253,22 @@ class TimeParser
                     }
 
                     foreach ($patterns as $pattern) {
-                        while ($this->match($pattern, $text, $matches)) {
-                            $matchesCount[$key]++;
+                        while ($language->match($pattern, $string, $matches)) {
+                            $matchesCount[$key] += count(array_filter($matches, function ($match) {
+                                return $match[0] !== '';
+                            }));
                         }
                     }
                 }
             }
         }
 
-        $maxMatches = max($matchesCount);
+        if (!$maxMatches = max($matchesCount)) {
+            return null;
+        }
+
         $langName = array_search($maxMatches, $matchesCount);
 
-        return $maxMatches ? $this->languages[$langName] : null;
+        return $this->languages[$langName];
     }
 }
