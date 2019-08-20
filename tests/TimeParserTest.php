@@ -49,7 +49,7 @@ class TimeParserTest extends TestCase
     {
         return [
             1 => ['at 15:12:13', '15:12:13'],
-            2 => ['в 15:12:13', '15:12:13'],
+            2 => ['15:12:13', '15:12:13'],
         ];
     }
 
@@ -116,6 +116,7 @@ class TimeParserTest extends TestCase
      * @param string      $expected
      * @param string|null $initial
      * @throws TimeParserException
+     * @throws Exception
      */
     public function testRussian(string $string, ?string $expected, ?string $initial = null)
     {
@@ -129,6 +130,7 @@ class TimeParserTest extends TestCase
     {
         return [
             0  => ['15 декабря 1977 года', '15 december 1977'],
+            1  => ['послезавтра около 7 часов', '+2 days 7 am'],
             2  => ['в следующий понедельник', 'next monday'],
             3  => ['в следующем году', '+1 year'],
             4  => ['в феврале', 'february'],
@@ -178,6 +180,12 @@ class TimeParserTest extends TestCase
             48 => ['18 декабря 2009 в 6:00', '6:00 18 december 2009'],
             49 => ['восемнадцатого января в обед', '18 january noon'],
             50 => ['через 3 дня', '16.08.2019', '13.08.2019'],
+            51 => ['послезавтра в 7', '+2 days 7 am'],
+            52 => ['послезавтра в 8 вечера', '+2 days 8 pm'],
+            53 => ['через пару дней', '+2 days'],
+            54 => ['завтра без 15 3', '+1 day 2:45'],
+            55 => ['завтра без 10 минут 5', '+1 day 4:50'],
+            56 => ['в 7', '7:00'],
         ];
     }
 
